@@ -1,6 +1,6 @@
 const WorkerMaster = (function(){
 	const me = {}
-	const workers = {};
+	const workers = {}
 	const Rand = Math.random
 
 	const WorkerProxy = {
