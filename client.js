@@ -1,11 +1,9 @@
 const {
 	EditorView,
 	EditorState,
-	basicSetup,
-	ChangeSet,
-	Annotation,
-	Transaction,
 	keymap,
+	ChangeSet,
+	lineNumbers,
 	indentWithTab,
 	javascript
 } = cm
@@ -17,15 +15,15 @@ function Client(id, state, server){
 	this.view = new EditorView({
 		state: EditorState.create({
 			extensions: [
-				basicSetup,
-				javascript(),
+				lineNumbers(),
+//				javascript(),
 				EditorView.updateListener.of(v => {
 					if (v.transactions.some(t => t.isUserEvent('am'))) return
 					const changes = this.cm2am(v)
 					if (!changes) return
 					server.update(changes)
 				}),
-				keymap.of([indentWithTab]),
+//				keymap.of([indentWithTab]),
 			]
 		}),
 		parent: document.getElementById(id)
@@ -39,25 +37,32 @@ Client.prototype = {
 		const arr = v.changes.toJSON()
 		if (!Array.isArray(arr)) return
 
-		// update AutoMerge
+		let merge2 = Automerge.merge(Automerge.init(), this.merge)
 		let insertAt = 0
 		let replace = null
-		if (Array.isArray(arr[0])){
-			replace = arr[0]
-		}else{
-			insertAt = arr[0]
-			replace = arr[1]
-		}
-		const [deleteCount, insertText] = replace
+		let insertText = null
+		// update AutoMerge
+		for (let i = 0, l = arr.length; i < l; ){
+			if (Array.isArray(arr[i])){
+				replace = arr[i++]
+			}else{
+				insertAt += arr[i++]
+				replace = arr[i++]
+			}
+			if (!replace) break
+			const [deleteCount, ...insertTexts] = replace
+			insertText = insertTexts.join('\n')
 
-		let merge2 = Automerge.merge(Automerge.init(), this.merge)
-		merge2 = Automerge.change(merge2, doc => {
-			if (deleteCount) doc.text.deleteAt(insertAt, deleteCount)
-			if (insertText) doc.text.insertAt(insertAt, insertText)
-		})
+			merge2 = Automerge.change(merge2, doc => {
+				if (deleteCount) doc.text.deleteAt(insertAt, deleteCount)
+				if (insertText) doc.text.insertAt(insertAt, insertText)
+			})
+			console.log('cm2am merge2', insertAt, deleteCount, insertText, merge2.text.toString())
+
+			insertAt += insertText.length //- 1 // why need to ignore return?
+		}
 
 		const changes = Automerge.getChanges(this.merge, merge2)
-		console.log('cm2am merge2', arr, merge2.text.toString())
 		this.merge = merge2
 		return changes
 	},
@@ -73,19 +78,22 @@ Client.prototype = {
 		console.log('am2cm merge2', props.text, merge2.text.toString())
 		const text = props.text
 		for (let key in text){
+			let offset = 0
+			let index
 			text[key].edits.forEach(diff => {
 				const changes = {}
+				index = diff.index //+ offset
 				switch (diff.action) {
 					case 'insert': {
-						changes.from = diff.index
-						changes.to = diff.index
+						changes.from = index
+						changes.to = index
 						changes.insert = diff.value.value
 						break
 					}
 					case 'remove': {
-						changes.from = diff.index
-						changes.to = diff.index
-						changes.replace = ''
+						changes.from = index
+						changes.to = index + diff.count
+						changes.insert = ''
 						break
 					}
 				}
@@ -97,6 +105,8 @@ Client.prototype = {
 					remote: true,
 					userEvent: 'am'
 				}))
+
+				offset++ // put back the return key
 			})
 		}
 	},
