@@ -7,46 +7,45 @@ const {
 } = cm 
 
 function char2Ele(ele, from, count){
-	let fromAt, countAt, start, end
+	let fromAt = 0, countAt, start, end
+	if (!ele.length) return [fromAt, countAt, from, count, start, end]
 	for (fromAt = 0; (start = ele.get(fromAt)); fromAt++){
 		if (from > 0){
 			from -= start.length
-			continue
+			if (from >= 0) continue
 		}
+		if (!count) break
+		// offset the chars before "from"
+		count += (start.length + (from ? from : -start.length))
 		for (countAt = fromAt; (end = ele.get(countAt)); countAt++){
 			if (count <= 0) break
-			count -= end.length
+			count -= (end.length)
+			if (count <= 0) break
 		}
+		break
 	}
 	return [fromAt, countAt, from, count, start, end]
 }
 
 function index2At(text, index, deleteCount, insertText){
 	const updates = []
-	let val
-	let valLen
-	let insertAt = 0	
-	for (val of text) {
-		if (index <= 0) break
-		valLen = val.length
-		index -= valLen
-		insertAt++
-	}
+	const [insertAt, endAt, from, count, start, end] = char2Ele(text, index, deleteCount)
 	if (deleteCount){
-		if (1 === valLen){
-			updates.push({insertAt, deleteCount: 1})
-			if (deleteCount != val.length) updates.push({insertAt, insertText: val.slice(0, val.length + index)})
-		}else{
-			updates.push({insertAt, deleteCount: 1})
-			if (deleteCount != val.length) updates.push({insertAt, insertText: val.slice(val.length + index)})
+		updates.push({insertAt, deleteCount: 1 + endAt - insertAt})
+		if (count){
+			updates.push({insertAt, insertText: end.slice(end.length + count)})
 		}
 	}
 	if (insertText){
-		if (index){
+		if (!deleteCount && from) {
 			updates.push({insertAt, deleteCount: 1})
-			updates.push({insertAt: insertAt, insertText: val.slice(0, val.length + index) + insertText + val.slice(val.length + index)})
-		}else{
-			updates.push({insertAt, insertText})
+			updates.push({insertAt, insertText: start.slice(0, start.length + from)})
+		}
+		updates.push({insertAt, insertText})
+	}
+	if (deleteCount){
+		if (from){
+			updates.push({insertAt, insertText: start.slice(0, start.length + from)})
 		}
 	}
 	return updates
