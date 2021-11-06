@@ -3,6 +3,7 @@ const c = require('./client')
 
 function Text(arr){
 	this.arr = arr
+	this.length = arr.length
 }
 
 Text.prototype = {

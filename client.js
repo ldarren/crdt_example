@@ -7,9 +7,10 @@ const {
 } = cm 
 
 function char2Ele(ele, from, count){
-	let fromAt = 0, countAt, start, end
+	let fromAt = 0, countAt, l = ele.length, start, end
 	if (!ele.length) return [fromAt, countAt, from, count, start, end]
-	for (fromAt = 0; (start = ele.get(fromAt)); fromAt++){
+	for (; fromAt < l; fromAt++){
+		start = ele.get(fromAt)
 		if (from > 0){
 			from -= start.length
 			if (from >= 0) continue
@@ -17,7 +18,8 @@ function char2Ele(ele, from, count){
 		if (!count) break
 		// offset the chars before "from"
 		count += (start.length + (from ? from : -start.length))
-		for (countAt = fromAt; (end = ele.get(countAt)); countAt++){
+		for (countAt = fromAt; countAt < l; countAt++){
+			end = ele.get(countAt)
 			if (count <= 0) break
 			count -= (end.length)
 			if (count <= 0) break
@@ -39,9 +41,12 @@ function index2At(text, index, deleteCount, insertText){
 	if (insertText){
 		if (!deleteCount && from) {
 			updates.push({insertAt, deleteCount: 1})
-			updates.push({insertAt, insertText: start.slice(0, start.length + from)})
+			updates.push({insertAt, insertText: start.slice(start.length + from)})
 		}
 		updates.push({insertAt, insertText})
+		if (!deleteCount && from) {
+			updates.push({insertAt, insertText: start.slice(0, start.length + from)})
+		}
 	}
 	if (deleteCount){
 		if (from){
@@ -64,10 +69,12 @@ function at2Index(text, at){
 function count2Char(text, at, count){
 	let chr = 0
 	for (val of text) {
-		if (!at) chr += val.length
 		if (!count) break
 		if (at) at--
-		else count--
+		else {
+			chr += val.length
+			count--
+		}
 	}
 	return chr
 }
@@ -152,7 +159,7 @@ Client.prototype = {
 			let index
 			text[key].edits.forEach(diff => {
 				const changes = {}
-				index = at2Index(this.merge.text, diff.index)
+				index = at2Index(merge2.text, diff.index)
 				switch (diff.action) {
 					case 'insert': {
 						changes.from = index
@@ -162,12 +169,11 @@ Client.prototype = {
 					}
 					case 'remove': {
 						changes.from = index
-						changes.to = index + count2Char(this.merge.text, index, diff.count)
+						changes.to = index + count2Char(this.merge.text, diff.index, diff.count)
 						changes.insert = ''
 						break
 					}
 				}
-				console.log('cm', changes, cm.state.doc.toString())
 				// update codemirror
 				cm.dispatch(cm.state.update({
 					changes,
@@ -176,6 +182,7 @@ Client.prototype = {
 					remote: true,
 					userEvent: 'am'
 				}))
+				console.log('cm', changes, cm.state.doc.toString())
 			})
 		}
 		this.merge = merge2
