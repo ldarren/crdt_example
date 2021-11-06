@@ -4,7 +4,74 @@ const {
 	basicSetup,
 	liteSetup,
 	javascript
-} = cm
+} = cm 
+
+function char2Ele(ele, from, count){
+	let fromAt, countAt, start, end
+	for (fromAt = 0; (start = ele.get(fromAt)); fromAt++){
+		if (from > 0){
+			from -= start.length
+			continue
+		}
+		for (countAt = fromAt; (end = ele.get(countAt)); countAt++){
+			if (count <= 0) break
+			count -= end.length
+		}
+	}
+	return [fromAt, countAt, from, count, start, end]
+}
+
+function index2At(text, index, deleteCount, insertText){
+	const updates = []
+	let val
+	let valLen
+	let insertAt = 0	
+	for (val of text) {
+		if (index <= 0) break
+		valLen = val.length
+		index -= valLen
+		insertAt++
+	}
+	if (deleteCount){
+		if (1 === valLen){
+			updates.push({insertAt, deleteCount: 1})
+			if (deleteCount != val.length) updates.push({insertAt, insertText: val.slice(0, val.length + index)})
+		}else{
+			updates.push({insertAt, deleteCount: 1})
+			if (deleteCount != val.length) updates.push({insertAt, insertText: val.slice(val.length + index)})
+		}
+	}
+	if (insertText){
+		if (index){
+			updates.push({insertAt, deleteCount: 1})
+			updates.push({insertAt: insertAt, insertText: val.slice(0, val.length + index) + insertText + val.slice(val.length + index)})
+		}else{
+			updates.push({insertAt, insertText})
+		}
+	}
+	return updates
+}
+
+function at2Index(text, at){
+	let index = 0
+	for (val of text) {
+		if (!at) break
+		index += val.length
+		at--
+	}
+	return index
+}
+
+function count2Char(text, at, count){
+	let chr = 0
+	for (val of text) {
+		if (!at) chr += val.length
+		if (!count) break
+		if (at) at--
+		else count--
+	}
+	return chr
+}
 
 function Client(id, state, server){
 	this.server = server
@@ -29,54 +96,6 @@ function Client(id, state, server){
 }
 
 Client.prototype = {
-	index2At(text, index, deleteCount, insertText){
-		const updates = []
-		let val
-		let insertAt = 0	
-		for (val of text) {
-			index -= val.length
-			if (index < 0) break
-			insertAt++
-			if (!index) break
-		}
-		if (deleteCount){
-			if (index){
-				updates.push({insertAt, deleteCount: 1})
-				if (deleteCount != val.length) updates.push({insertAt, insertText: val.slice(0, val.length + index)})
-			}else{
-				updates.push({insertAt, deleteCount: 1})
-				if (deleteCount != val.length) updates.push({insertAt, insertText: val.slice(val.length + index)})
-			}
-		}
-		if (insertText){
-			if (index){
-				updates.push({insertAt, deleteCount: 1})
-				updates.push({insertAt: insertAt, insertText: val.slice(0, val.length + index) + insertText + val.slice(val.length + index)})
-			}else{
-				updates.push({insertAt, insertText})
-			}
-		}
-		return updates
-	},
-	at2Index(text, at){
-		let index = 0
-		for (val of text) {
-			if (!at) break
-			index += val.length
-			at--
-		}
-		return index
-	},
-	count2Char(text, at, count){
-		let chr = 0
-		for (val of text) {
-			if (!at) chr += val.length
-			if (!count) break
-			if (at) at--
-			else count--
-		}
-		return chr
-	},
 
 	cm2am(v){
 		// validation
@@ -101,7 +120,7 @@ Client.prototype = {
 			const [deleteCount, ...insertTexts] = replace
 			insertText = insertTexts.join('\n')
 
-			updates = this.index2At(merge2.text, index, deleteCount, insertText)
+			updates = index2At(merge2.text, index, deleteCount, insertText)
 
 			console.log('cm2am merge2 before', index, deleteCount, insertText, merge2.text.toString())
 			merge2 = Automerge.change(merge2, doc => {
@@ -134,7 +153,7 @@ Client.prototype = {
 			let index
 			text[key].edits.forEach(diff => {
 				const changes = {}
-				index = this.at2Index(this.merge.text, diff.index)
+				index = at2Index(this.merge.text, diff.index)
 				switch (diff.action) {
 					case 'insert': {
 						changes.from = index
@@ -144,7 +163,7 @@ Client.prototype = {
 					}
 					case 'remove': {
 						changes.from = index
-						changes.to = index + this.count2Char(this.merge.text, index, diff.count)
+						changes.to = index + count2Char(this.merge.text, index, diff.count)
 						changes.insert = ''
 						break
 					}
@@ -162,4 +181,10 @@ Client.prototype = {
 		}
 		this.merge = merge2
 	},
+}
+
+if ('object' === typeof module){
+	module.exports = {
+		char2Ele
+	}
 }

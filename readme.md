@@ -13,6 +13,11 @@ Automerge build steps
 - npm run build
 - cp ./dist/\* {your}/{path}/dist/
 
+## Test
+```sh
+npm test
+```
+
 ## Run
 open `index.html` in browser
 
