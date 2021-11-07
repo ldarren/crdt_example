@@ -79,6 +79,16 @@ function count2Char(text, at, count){
 	return chr
 }
 
+function submit(evt){
+	console.log(evt)
+	const form = evt.target.closest('form')
+	for(let i = 0, l = form.length, input; i < l; i++){
+		input = form[i]
+		console.log(input.name, input.value)
+	}
+	debugger
+}
+
 function Client(id, state, server){
 	this.server = server
 	const [merge] = Automerge.applyChanges(Automerge.init(), state)
@@ -97,8 +107,9 @@ function Client(id, state, server){
 				}),
 			]
 		}),
-		parent: document.getElementById(id)
+		parent: document.querySelector(`form#${id} div.editor`)
 	})
+	document.querySelector(`form#${id} input[type=button]`).addEventListener('click', submit)
 }
 
 Client.prototype = {

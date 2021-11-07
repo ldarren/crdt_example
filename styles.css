@@ -7,8 +7,24 @@ body {
     font-family: 'Gill Sans','Gill Sans MT',Calibri,'Trebuchet MS',sans-serif;
 	height: 100%;
 }
-body .cm-editor{
-	min-height: 100%;
+
+form.apiform{
+	display: table;
+	width: 100%;
 }
-.cm-wrap { height: 100% }
-.cm-scroller { overflow: auto }
+.apiform span{
+    display: table-row;
+}
+label, input, textarea {
+	display: table-cell;
+	margin-bottom: 10px;
+    font-size:12pt;
+}
+label, input{
+    height:20px;
+	width: 100%;
+}
+label {
+	padding-right: 10px;
+	width: 120px;
+}
