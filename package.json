@@ -1,6 +1,6 @@
 {
   "name": "crdt-example",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "crdt example with Automerge and codemirror",
   "main": "client.js",
   "scripts": {
