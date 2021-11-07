@@ -10,7 +10,7 @@ WorkerModule.define({
 		// receive same changes from upstream
 		try{
 			const [merge2, patch] = Automerge.applyChanges(merge, changes)
-			console.log('server merge2', merge2.text.toString(), Automerge.getAllChanges(merge2, 'text'))
+			console.log('server merge2', patch.diffs.props.text, merge2.text.toString())
 			WorkerModule.master.update(changes)
 			merge = merge2
 		}catch(ex){
