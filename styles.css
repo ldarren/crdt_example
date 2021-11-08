@@ -8,9 +8,16 @@ body {
 	height: 100%;
 }
 
+form#first{
+	background: #c8d9ed;
+}
+form#second{
+	background: #ffcccb;;
+}
 form.apiform{
 	display: table;
 	width: 100%;
+	padding:10px;
 }
 .apiform span{
     display: table-row;

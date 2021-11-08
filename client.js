@@ -82,11 +82,17 @@ function count2Char(text, at, count){
 function submit(evt){
 	console.log(evt)
 	const form = evt.target.closest('form')
+	const obj = {}
 	for(let i = 0, l = form.length, input; i < l; i++){
 		input = form[i]
+		obj[input.name] = input.value
 		console.log(input.name, input.value)
 	}
-	debugger
+	const req = form.querySelector('div.editor .cm-content').textContent
+	__.ajax(obj.method, obj.url, req, {headers: {'Content-Type': obj.type}}, (err, state, xhr) => {
+		if (4 > state) return
+		form[form.length - 1].value = xhr
+	})
 }
 
 function Client(id, state, server){

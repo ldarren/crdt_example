@@ -30,9 +30,10 @@
 		</span>
 		<span>
 			<label for="res">Response: </label>
-			<textarea name="res" id="res" rows="5" cols="33"></textarea>
+			<textarea name="res" id="res" rows="5" cols="80" readonly disabled></textarea>
 		</span>
 	</form>
+	<br>
 	<form id=second action="" method="get" class="apiform">
 		<span>
 			<label for="method">Method: </label>
@@ -55,10 +56,11 @@
 		</span>
 		<span>
 			<label for="res">Response: </label>
-			<textarea name="res" id="res" rows="5" cols="33"></textarea>
+			<textarea name="res" id="res" rows="5" cols="80" readonly disabled></textarea>
 		</span>
 	</form>
 	<script src="./dist/automerge.js"></script>
+	<script src="./dist/lean.js"></script>
 	<script src="./src/worker_master.js"></script>
     <script src="editor.bundle.js"></script>  
     <script src="client.js"></script>  
