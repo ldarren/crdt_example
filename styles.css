@@ -29,9 +29,10 @@ label, input, textarea {
 }
 label, input{
     height:20px;
-	width: 100%;
+	width: 90%;
 }
 label {
 	padding-right: 10px;
 	width: 120px;
+	white-space: nowrap;
 }
