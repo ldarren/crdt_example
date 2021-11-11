@@ -16,8 +16,11 @@ WorkerModule.define({
 		// receive same changes from upstream
 		try{
 			const [merge2, patch] = Automerge.applyChanges(merge, changes)
-			console.log('server merge2', patch.diffs.props.req, merge2.req.toString())
-			WorkerModule.master.update(changes)
+			console.log('server merge2', patch.diffs.props, merge2.req.toString())
+			if (Object.keys(patch.diffs.props).length){
+				const update = Automerge.getChanges(merge, merge2)
+				WorkerModule.master.update(update)
+			}
 			merge = merge2
 		}catch(ex){
 			console.error(ex)

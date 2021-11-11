@@ -89,7 +89,7 @@ function form2Obj(form){
 	const arr = []
 	if (obj.h1) arr.push(obj.h1)
 	if (obj.h2){
-		if (obj.r1 < obj.r2) arr.push(obj.h2)	
+		if (obj.r1 >= obj.r2) arr.push(obj.h2)	
 		else arr.unshift(obj.h2)	
 	}
 	obj.headers = arr
@@ -118,10 +118,11 @@ function blur(ctx, evt){
 	const merge2 = Automerge.change(ctx.merge, doc => {
 		doc.method = obj.method
 		doc.url = obj.url
-		doc.headers = obj.headers
+		obj.headers.forEach((h, i) => doc.headers[i] = h)
 	})
 
 	const changes = Automerge.getChanges(ctx.merge, merge2)
+	if (!changes.length) return
 	ctx.merge = merge2
 	ctx.server.update(changes)
 }
@@ -139,8 +140,14 @@ function updateUI(form, merge){
 		case 'h1':
 			input.value = merge.headers[0] || ''
 			break
+		case 'r1':
+			input.value = 0
+			break
 		case 'h2':
 			input.value = merge.headers[1] || ''
+			break
+		case 'r2':
+			input.value = 0
 			break
 		}
 	}
@@ -222,15 +229,17 @@ Client.prototype = {
 	},
 
 	am2cm(patch){
-		console.log('client receive ######', patch)
+		console.log('client receive ######', this.merge, patch)
 		// create changes and sent to upstream
 		const [merge2, patch2] = Automerge.applyChanges(Automerge.merge(Automerge.init(), this.merge), patch)
+		const merge = this.merge
+		this.merge = merge2
 
+		console.log('am2cm merge2', merge2, patch2)
 		updateUI(this.form, merge2)
 
 		const props = patch2.diffs.props
 		if (!props.req) return
-		console.log('am2cm merge2', props.req, merge2.req.toString())
 		const text = props.req
 		const cm = this.view
 		for (let key in text){
@@ -247,7 +256,7 @@ Client.prototype = {
 					}
 					case 'remove': {
 						changes.from = index
-						changes.to = index + count2Char(this.merge.req, diff.index, diff.count)
+						changes.to = index + count2Char(merge.req, diff.index, diff.count)
 						changes.insert = ''
 						break
 					}
@@ -263,7 +272,6 @@ Client.prototype = {
 				console.log('cm', changes, cm.state.doc.toString())
 			})
 		}
-		this.merge = merge2
 	},
 }
 
